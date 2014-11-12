@@ -1,0 +1,35 @@
+MapReduce源码分析(主要四大模块,others表示父目录下的.java文件的总称):
+1.org.apache.hadoop.mapred(旧版MapReduceAPI):
+(1).jobcontrol
+(2).join:
+|----(1).aggregate
+|----(2).db
+|----(3).others
+(3).lib
+(4).pipes
+(5).tools
+(6).others
+2.org.apache.hadoop.mapreduce(新版MapReduceAPI):
+(1).example
+(2).lib:
+|----(1).aggregate
+|----(2).db
+|----(3).others
+(3).security
+|----(1).token
+|        |----(1).delegation
+|        |----(2).others
+|----(2).others
+(4).server
+|----(1).jobtracker
+|----(2).tasktracker
+        |----(1).userlogs
+        |----(2).others
+(5).split
+(6).others
+3.org.apache.hadoop.filecache(文件缓存，用于文件分发):
+(1).DistributedCache.java
+(2).TaskDistributedCacheManager.java
+(3).TrackerDistributedCacheManager.java
+4.org.apache.hadoop---mapreduce-default.xml:
+主目录下的MapReduce的默认文件,包括地址端口号等的配置。
