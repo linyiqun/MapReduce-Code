@@ -2195,27 +2195,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
   
   JobTracker(final JobConf conf, String identifier, Clock clock, QueueManager qm) 
   throws IOException, InterruptedException { 
-    this.queueManager = qm;
-    this.clock = clock;
-    // Set ports, start RPC servers, setup security policy etc.
-    InetSocketAddress addr = getAddress(conf);
-    this.localMachine = addr.getHostName();
-    this.port = addr.getPort();
-    // find the owner of the process
-    // get the desired principal to load
-    UserGroupInformation.setConfiguration(conf);
-    SecurityUtil.login(conf, JT_KEYTAB_FILE, JT_USER_NAME, localMachine);
-
-    long secretKeyInterval = 
-    conf.getLong(DELEGATION_KEY_UPDATE_INTERVAL_KEY, 
-                   DELEGATION_KEY_UPDATE_INTERVAL_DEFAULT);
-    long tokenMaxLifetime =
-      conf.getLong(DELEGATION_TOKEN_MAX_LIFETIME_KEY,
-                   DELEGATION_TOKEN_MAX_LIFETIME_DEFAULT);
-    long tokenRenewInterval =
-      conf.getLong(DELEGATION_TOKEN_RENEW_INTERVAL_KEY, 
-                   DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT);
-    
+    .....    
     //初始化安全相关操作
     secretManager = 
       new DelegationTokenSecretManager(secretKeyInterval,
@@ -2224,73 +2204,14 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
                                        DELEGATION_TOKEN_GC_INTERVAL);
     secretManager.startThreads();
        
-    MAX_JOBCONF_SIZE = conf.getLong(MAX_USER_JOBCONF_SIZE_KEY, MAX_JOBCONF_SIZE);
-    //
-    // Grab some static constants
-    //
-    TASKTRACKER_EXPIRY_INTERVAL = 
-      conf.getLong("mapred.tasktracker.expiry.interval", 10 * 60 * 1000);
-    RETIRE_JOB_INTERVAL = conf.getLong("mapred.jobtracker.retirejob.interval", 24 * 60 * 60 * 1000);
-    RETIRE_JOB_CHECK_INTERVAL = conf.getLong("mapred.jobtracker.retirejob.check", 60 * 1000);
-    retiredJobsCacheSize =
-             conf.getInt("mapred.job.tracker.retiredjobs.cache.size", 1000);
-    MAX_COMPLETE_USER_JOBS_IN_MEMORY = conf.getInt("mapred.jobtracker.completeuserjobs.maximum", 100);
-
-    // values related to heuristic graylisting (a "fault" is a per-job
-    // blacklisting; too many faults => node is graylisted across all jobs):
-    TRACKER_FAULT_TIMEOUT_WINDOW =  // 3 hours
-      conf.getInt("mapred.jobtracker.blacklist.fault-timeout-window", 3 * 60);
-    TRACKER_FAULT_BUCKET_WIDTH =    // 15 minutes
-      conf.getInt("mapred.jobtracker.blacklist.fault-bucket-width", 15);
-    TRACKER_FAULT_THRESHOLD =
-      conf.getInt("mapred.max.tracker.blacklists", 4);
-      // future:  rename to "mapred.jobtracker.blacklist.fault-threshold" for
-      // namespace consistency
-
-    if (TRACKER_FAULT_BUCKET_WIDTH > TRACKER_FAULT_TIMEOUT_WINDOW) {
-      TRACKER_FAULT_BUCKET_WIDTH = TRACKER_FAULT_TIMEOUT_WINDOW;
-    }
-    TRACKER_FAULT_BUCKET_WIDTH_MSECS =
-      (long)TRACKER_FAULT_BUCKET_WIDTH * 60 * 1000;
-
-    // ideally, TRACKER_FAULT_TIMEOUT_WINDOW should be an integral multiple of
-    // TRACKER_FAULT_BUCKET_WIDTH, but round up just in case:
-    NUM_FAULT_BUCKETS =
-      (TRACKER_FAULT_TIMEOUT_WINDOW + TRACKER_FAULT_BUCKET_WIDTH - 1) /
-      TRACKER_FAULT_BUCKET_WIDTH;
-
-    NUM_HEARTBEATS_IN_SECOND = 
-      conf.getInt(JT_HEARTBEATS_IN_SECOND, DEFAULT_NUM_HEARTBEATS_IN_SECOND);
-    if (NUM_HEARTBEATS_IN_SECOND < MIN_NUM_HEARTBEATS_IN_SECOND) {
-      NUM_HEARTBEATS_IN_SECOND = DEFAULT_NUM_HEARTBEATS_IN_SECOND;
-    }
-    
-    HEARTBEATS_SCALING_FACTOR = 
-      conf.getFloat(JT_HEARTBEATS_SCALING_FACTOR, 
-                    DEFAULT_HEARTBEATS_SCALING_FACTOR);
-    if (HEARTBEATS_SCALING_FACTOR < MIN_HEARTBEATS_SCALING_FACTOR) {
-      HEARTBEATS_SCALING_FACTOR = DEFAULT_HEARTBEATS_SCALING_FACTOR;
-    }
-
-    // This configuration is there solely for tuning purposes and
-    // once this feature has been tested in real clusters and an appropriate
-    // value for the threshold has been found, this config might be taken out.
-    AVERAGE_BLACKLIST_THRESHOLD =
-      conf.getFloat("mapred.cluster.average.blacklist.threshold", 0.5f);
-
-    // This is a directory of temporary submission files.  We delete it
-    // on startup, and can delete any files that we're done with
-    this.conf = conf;
-    JobConf jobConf = new JobConf(conf);
-
-    initializeTaskMemoryRelatedConfig();
+    ......
 
     // Read the hosts/exclude files to restrict access to the jobtracker.
     this.hostsReader = new HostsFileReader(conf.get("mapred.hosts", ""),
                                            conf.get("mapred.hosts.exclude", ""));
     //初始化ACL访问控制列表
     aclsManager = new ACLsManager(conf, new JobACLsManager(conf), queueManager);
-
+    
     LOG.info("Starting jobtracker with owner as " +
         getMROwner().getShortUserName());
 
@@ -2584,17 +2505,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
     }
 
     taskScheduler.start();
-    
-    //  Start the recovery after starting the scheduler
-    try {
-      recoveryManager.recover();
-    } catch (Throwable t) {
-      LOG.warn("Recovery manager crashed! Ignoring.", t);
-    }
-    // refresh the node list as the recovery manager might have added 
-    // disallowed trackers
-    refreshHosts();
-    
+    .....
     this.expireTrackersThread = new Thread(this.expireTrackers,
                                           "expireTrackers");
     //启动该线程的主要作用是发现和清理死掉的任务
@@ -3253,7 +3164,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
   }
 
   public static Node getParentNode(Node node, int level) {
-    for (int i = 0; i < level; ++i) {
+    for (int i = ‘0; i < level; ++i) {
       node = node.getParent();
     }
     return node;
@@ -3395,6 +3306,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
                    new TaskTrackerAction[] {new ReinitTrackerAction()});
     }
       
+    //通过心跳机制发送命令回应
     // Initialize the response to be sent for the heartbeat
     HeartbeatResponse response = new HeartbeatResponse(newResponseId, null);
     List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
@@ -3406,7 +3318,9 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
         LOG.warn("Unknown task tracker polling; ignoring: " + trackerName);
       } else {
         List<Task> tasks = getSetupAndCleanupTasks(taskTrackerStatus);
+        //说明此TaskTtracker上无任务了
         if (tasks == null ) {
+          //为此TaskTracker分配任务
           tasks = taskScheduler.assignTasks(taskTrackers.get(trackerName));
         }
         if (tasks != null) {
@@ -4208,6 +4122,9 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
     return secretManager.renewToken(token, user);
   }  
 
+  /**
+   * 初始化作业操作
+   */
   public void initJob(JobInProgress job) {
     if (null == job) {
       LOG.info("Init on null job is not valid");
@@ -4217,6 +4134,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
     try {
       JobStatus prevStatus = (JobStatus)job.getStatus().clone();
       LOG.info("Initializing " + job.getJobID());
+      //初始化Task任务
       job.initTasks();
       // Inform the listeners if the job state has changed
       // Note : that the job will be in PREP state.
